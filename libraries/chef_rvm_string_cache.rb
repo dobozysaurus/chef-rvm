@@ -19,7 +19,7 @@
 # limitations under the License.
 #
 
-require 'chef/mixin/command'
+require 'mixlib/shellout'
 
 class Chef
   module RVM
@@ -29,7 +29,7 @@ class Chef
 
     class StringCache
       class << self
-        include Chef::Mixin::Command
+        include Mixlib::Shellout
         include Chef::RVM::ShellHelpers
       end
 
@@ -67,14 +67,16 @@ class Chef
           user_dir = nil
         end
 
-        cmd = ["source #{find_profile_to_source(user_dir)}",
+        cmd_string = ["source #{find_profile_to_source(user_dir)}",
           "rvm_ruby_string='#{str}'", "__rvm_ruby_string",
           "echo $rvm_ruby_string"].join(" && ")
-        pid, stdin, stdout, stderr = popen4('bash', shell_params(user, user_dir))
-        stdin.puts(cmd)
-        stdin.close
+        cmd = Mixlib::Shellout.new cmd_string, shell_params(user, user_dir)
+        # pid, stdin, stdout, stderr = popen4('bash', shell_params(user, user_dir))
+        # stdin.puts(cmd)
+        # stdin.close
+        cmd.run_command
 
-        result = stdout.read.split('\n').first.chomp
+        result = cmd.stdout.read.split('\n').first.chomp
         if result =~ /^-/   # if the result has a leading dash, value is bogus
           Chef::Log.warn("Could not determine canonical RVM string for: #{str} " +
                          "(#{user || 'system'})")
