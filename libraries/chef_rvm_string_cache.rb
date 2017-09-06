@@ -29,7 +29,6 @@ class Chef
 
     class StringCache
       class << self
-        include Mixlib::ShellOut
         include Chef::RVM::ShellHelpers
       end
 
